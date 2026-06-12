@@ -1,0 +1,18 @@
+# xcodegen output (regenerate with `xcodegen generate`)
+*.xcodeproj
+
+# Build artifacts
+.build/
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+
+# Xcode per-user state
+xcuserdata/
+*.xcuserdatad
+*.moved-aside
+
+# macOS
+.DS_Store
+**/.DS_Store
