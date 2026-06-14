@@ -383,4 +383,10 @@ struct AppInfoTests {
 		#expect(AppInfo.version([:]) == "v—")
 		#expect(AppInfo.version(nil) == "v—")
 	}
+
+	@Test func privacyPolicyURLIsHTTPS() {
+		#expect(AppInfo.privacyPolicyURL.scheme == "https")
+		#expect(AppInfo.privacyPolicyURL.absoluteString
+			== "https://iclint.github.io/PrivayPolicies/cannacalc/")
+	}
 }

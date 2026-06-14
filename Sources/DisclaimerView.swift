@@ -21,6 +21,7 @@ struct DisclaimerView: View {
 						heading
 						affiliationCard
 						calculationCard
+						privacyCard
 						if isFirstRun { dontShowAgainToggle }
 					}
 					.padding(16)
@@ -70,6 +71,24 @@ struct DisclaimerView: View {
 		card("CALCULATIONS") {
 			Text("Doses follow the published CANNA Coco grow schedule (AU V25.01) and are rounded for easy measuring. They are guidance only — always verify EC and pH with your own meter and adjust to your plants and water. Not professional horticultural advice.")
 		}
+	}
+
+	// Opens the hosted privacy policy in the browser.
+	private var privacyCard: some View {
+		Link(destination: AppInfo.privacyPolicyURL) {
+			HStack(spacing: 10) {
+				Image(systemName: "lock.shield")
+					.font(.body).foregroundStyle(Theme.accent)
+				Text("Privacy Policy")
+					.font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
+				Spacer()
+				Image(systemName: "arrow.up.right")
+					.font(.caption.weight(.bold)).foregroundStyle(Theme.secondary)
+			}
+			.frame(maxWidth: .infinity, alignment: .leading)
+			.padding(16).glassCard()
+		}
+		.buttonStyle(.plain)
 	}
 
 	private var dontShowAgainToggle: some View {

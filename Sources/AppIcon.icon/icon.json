@@ -19,6 +19,32 @@
     {
       "layers" : [
         {
+          "glass" : false,
+          "image-name" : "Layer 2.png",
+          "name" : "Layer 2",
+          "position" : {
+            "scale" : 0.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "Layer.png",
+          "name" : "Layer",
+          "position" : {
+            "scale" : 0.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "hidden" : true,
           "image-name" : "image_e1dae3b7.png",
           "name" : "image_e1dae3b7",
           "position" : {
@@ -30,6 +56,7 @@
           }
         },
         {
+          "hidden" : true,
           "image-name" : "Esi7s.jpg",
           "name" : "Esi7s",
           "position" : {
@@ -55,6 +82,7 @@
         },
         {
           "glass" : false,
+          "hidden" : true,
           "image-name" : "CANNA Calculator.png",
           "name" : "CANNA Calculator",
           "position" : {
