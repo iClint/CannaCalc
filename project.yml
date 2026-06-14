@@ -15,6 +15,9 @@ targets:
       base:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         GENERATE_INFOPLIST_FILE: YES
+        # Base Info.plist merged with the generated keys — carries the custom UILaunchScreen
+        # dict (plant image over the adaptive LaunchBackground colour, same as TentControl).
+        INFOPLIST_FILE: Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.clintkingston.CocoFeed
         DEVELOPMENT_TEAM: FNCTF888W8
         CODE_SIGN_STYLE: Automatic
@@ -22,8 +25,10 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
-        INFOPLIST_KEY_CFBundleDisplayName: CocoFeed
+        INFOPLIST_KEY_CFBundleDisplayName: CannaCalc
+        # Icon Composer file is Sources/AppIcon.icon — point actool at it by name so the
+        # app icon survives xcodegen regeneration.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   CocoFeedTests:
     type: bundle.unit-test
     platform: iOS

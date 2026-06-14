@@ -10,3 +10,8 @@ struct CocoFeedApp: App {
 		}
 	}
 }
+
+// The app's root content (an App scene isn't previewable, so preview its window content).
+#Preview {
+	CalculatorView()
+}

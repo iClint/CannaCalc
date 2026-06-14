@@ -114,6 +114,25 @@ struct RecipeItem: Identifiable {
 	let ml: Double
 }
 
+// The bottles a grower can dose. Coco A & B are the required base; the rest are optional
+// additives the grower toggles on/off by what they actually own. CalMag leads the lineup —
+// it's mixed first to bring source water to CANNA's 0.4 mS/cm starting EC.
+enum FeedProduct: String, CaseIterable, Identifiable {
+	case calMag = "Cal-Mag"
+	case cocoA = "CANNA Coco A"
+	case cocoB = "CANNA Coco B"
+	case rhizotonic = "CANNA Rhizotonic"
+	case cannazym = "CANNA Cannazym"
+	case cannaboost = "CANNABOOST Accelerator"
+	case pk = "CANNA PK 13/14"
+
+	var id: String { rawValue }
+	// Coco A & B are the base feed and are always part of the mix.
+	var isCore: Bool { self == .cocoA || self == .cocoB }
+	// Optional bottles the grower may or may not own, in mix order.
+	static var optional: [FeedProduct] { allCases.filter { !$0.isCore } }
+}
+
 struct Recipe {
 	let items: [RecipeItem]
 	let targetEC: Double                  // final total mS/cm the feed aims for (after any pH-up allowance)
@@ -180,25 +199,33 @@ enum CannaCoco {
 	// dosed to (targetEC − headroom) so the feed reaches `targetEC` after pH-up. Only applies
 	// to nutrient phases.
 	static func recipe(phase: GrowthPhase, volumeL: Double, waterEC: Double,
-	                   basePH: Double, targetEC: Double, phHeadroom: Double = 0) -> Recipe {
+	                   basePH: Double = 5.8, targetEC: Double, phHeadroom: Double = 0,
+	                   owned: Set<FeedProduct> = Set(FeedProduct.allCases)) -> Recipe {
 		let headroom = phase.feedsNutrients ? phHeadroom : 0
 		let abEach = abEach(phase, targetEC: targetEC - headroom)
 		let calmag = calMag(waterEC: waterEC)
 		let mixEC = ecForAB(phase, abEach)     // meter reading when mixed, before pH adjustment
 		let totalEC = mixEC + headroom         // final EC after pH-up (== targetEC within band)
 
-		let lineup: [(name: String, mlPerL: Double)] = [
-			("CANNA Coco A", abEach),
-			("CANNA Coco B", abEach),
-			("Cal-Mag", calmag),
-			("CANNA Rhizotonic", phase.rhizotonic),
-			("CANNA Cannazym", phase.cannazym),
-			("CANNABOOST Accelerator", phase.cannaboost),
-			("CANNA PK 13/14", phase.pk),
+		// Per-product dose (ml/L). CalMag leads so the water hits 0.4 mS/cm before the base goes in.
+		let doses: [FeedProduct: Double] = [
+			.calMag: calmag,
+			.cocoA: abEach,
+			.cocoB: abEach,
+			.rhizotonic: phase.rhizotonic,
+			.cannazym: phase.cannazym,
+			.cannaboost: phase.cannaboost,
+			.pk: phase.pk,
 		]
+		// Keep CANNA's mix order (CalMag → A → B → …) and drop any bottle the grower doesn't own.
 		// Per-item ml rounded to whole numbers so it's measurable; ml/L stays precise (EC math
 		// is off ml/L, not these rounded mls).
-		let items = lineup.map { RecipeItem(name: $0.name, mlPerL: $0.mlPerL, ml: ($0.mlPerL * volumeL).rounded()) }
+		let items = FeedProduct.allCases
+			.filter { $0.isCore || owned.contains($0) }
+			.map { product -> RecipeItem in
+				let mlPerL = doses[product] ?? 0
+				return RecipeItem(name: product.rawValue, mlPerL: mlPerL, ml: (mlPerL * volumeL).rounded())
+			}
 
 		let phBand = String(format: "%.1f–%.1f", phTarget.lowerBound, phTarget.upperBound)
 		let phNote: String

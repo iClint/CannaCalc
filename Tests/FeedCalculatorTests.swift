@@ -1,4 +1,5 @@
 import Testing
+import SwiftUI
 @testable import CocoFeed
 
 // CANNA Coco feed logic, built verbatim from the CANNA COCO GROW SCHEDULE (AU, V25.01).
@@ -188,5 +189,198 @@ struct FeedCalculatorTests {
 		#expect(note(7.0).contains("Lower"))
 		#expect(note(5.0).contains("Raise"))
 		#expect(note(6.0) == "In range")
+	}
+
+	// MARK: - Product lineup: ordering & ownership
+
+	private func names(_ r: Recipe) -> [String] { r.items.map(\.name) }
+
+	@Test func coreAndOptionalProductSplit() {
+		#expect(FeedProduct.cocoA.isCore)
+		#expect(FeedProduct.cocoB.isCore)
+		#expect(!FeedProduct.calMag.isCore)
+		// Optional products, in mix order, are everything but the base A & B.
+		#expect(FeedProduct.optional == [.calMag, .rhizotonic, .cannazym, .cannaboost, .pk])
+	}
+
+	@Test func calMagIsTheFirstIngredient() {
+		// Soft water → CalMag is dosed and must lead the lineup (it brings water to 0.4 first).
+		#expect(names(make(.vegetativeII, waterEC: 0)).first == FeedProduct.calMag.rawValue)
+	}
+
+	@Test func defaultRecipeKeepsFullLineupInProductOrder() {
+		// Owning everything (the default) yields all bottles in FeedProduct order.
+		#expect(names(make(.generativeII)) == FeedProduct.allCases.map(\.rawValue))
+	}
+
+	@Test func unownedOptionalProductsAreDropped() {
+		let r = CannaCoco.recipe(phase: .vegetativeII, volumeL: 1, waterEC: 0.4,
+		                         targetEC: CannaCoco.defaultEC(.vegetativeII),
+		                         owned: [.cocoA, .cocoB])
+		#expect(names(r) == [FeedProduct.cocoA.rawValue, FeedProduct.cocoB.rawValue])
+	}
+
+	@Test func coreBaseAlwaysPresentEvenWhenNotOwned() {
+		// Owning nothing still doses the base A & B (they're not optional).
+		let r = CannaCoco.recipe(phase: .vegetativeII, volumeL: 1, waterEC: 0.4,
+		                         targetEC: CannaCoco.defaultEC(.vegetativeII), owned: [])
+		#expect(names(r) == [FeedProduct.cocoA.rawValue, FeedProduct.cocoB.rawValue])
+	}
+
+	@Test func ownedSubsetPreservesOrderWithCalMagFirst() {
+		let r = CannaCoco.recipe(phase: .generativeII, volumeL: 1, waterEC: 0,
+		                         targetEC: CannaCoco.defaultEC(.generativeII),
+		                         owned: [.calMag, .pk])
+		#expect(names(r) == [FeedProduct.calMag.rawValue, FeedProduct.cocoA.rawValue,
+		                     FeedProduct.cocoB.rawValue, FeedProduct.pk.rawValue])
+	}
+
+	@Test func excludedProductDosesStillCorrectForOwnedOnes() {
+		// Dropping a bottle must not disturb the doses of the bottles that remain.
+		let full = make(.generativeII, waterEC: 0)
+		let subset = CannaCoco.recipe(phase: .generativeII, volumeL: 1, waterEC: 0,
+		                              targetEC: CannaCoco.defaultEC(.generativeII),
+		                              owned: [.calMag])
+		#expect(dose(subset, "CANNA Coco A") == dose(full, "CANNA Coco A"))
+		#expect(dose(subset, "Cal-Mag") == dose(full, "Cal-Mag"))
+	}
+
+	// MARK: - App theme
+
+	@Test func appThemeColorSchemeMapping() {
+		#expect(AppTheme.system.colorScheme == nil)         // follow the device
+		#expect(AppTheme.light.colorScheme == .light)
+		#expect(AppTheme.dark.colorScheme == .dark)
+	}
+
+	@Test func appThemeLabels() {
+		#expect(AppTheme.allCases.map(\.label) == ["System", "Light", "Dark"])
+	}
+
+	// MARK: - EC formatting & tone (presentation logic)
+
+	@Test func ecFormatterNumberAndValuePerUnit() {
+		#expect(ECFormatter(unit: .mS).number(2.2) == "2.20")        // 2 dp for mS
+		#expect(ECFormatter(unit: .mS).value(2.2) == "2.20 mS")
+		#expect(ECFormatter(unit: .ppm500).number(2.2) == "1100")    // 0 dp, ×500
+		#expect(ECFormatter(unit: .ppm500).value(2.2) == "1100 ppm")
+		#expect(ECFormatter(unit: .ppm700).value(1.0) == "700 ppm")
+	}
+
+	@Test func ecToneClassifiesAgainstPhaseDefault() {
+		let f = ECFormatter(unit: .mS)
+		let def = CannaCoco.defaultEC(.vegetativeII)   // 2.2
+		#expect(f.tone(def, phase: .vegetativeII) == .canna)         // on the chart
+		#expect(f.tone(def - 0.5, phase: .vegetativeII) == .gentle)  // weaker
+		#expect(f.tone(def + 0.3, phase: .vegetativeII) == .strong)  // hotter
+		// Just inside the tolerance still reads as CANNA.
+		#expect(f.tone(def + ECFormatter.cannaTolerance / 2, phase: .vegetativeII) == .canna)
+	}
+
+	// MARK: - Identifiable conformance (used by the SwiftUI ForEach lists)
+
+	@Test func identifiableIDsAreStable() {
+		#expect(GrowthPhase.vegetativeII.id == GrowthPhase.vegetativeII.rawValue)
+		#expect(FeedProduct.calMag.id == FeedProduct.calMag.rawValue)
+		#expect(ECUnit.ppm500.id == ECUnit.ppm500.rawValue)
+		#expect(AppTheme.dark.id == AppTheme.dark.rawValue)
+		let item = make(.vegetativeII).items[0]
+		#expect(item.id == item.id)   // RecipeItem carries a stable UUID
+	}
+}
+
+// FeedSettings persistence, exercised against an isolated UserDefaults suite (never the app's
+// real store) so every path — defaults, round-trip, ownership edits, bad data — is covered.
+@MainActor
+struct FeedSettingsTests {
+	// A clean, empty defaults store unique to each test.
+	private func freshDefaults(_ suite: String) -> UserDefaults {
+		let ud = UserDefaults(suiteName: suite)!
+		ud.removePersistentDomain(forName: suite)
+		return ud
+	}
+
+	@Test func defaultsWhenNothingPersisted() {
+		let s = FeedSettings(defaults: freshDefaults("test.defaults"))
+		#expect(s.volume == 15)
+		#expect(s.baseEC == 0.3)
+		#expect(s.ecUnit == .mS)                            // empty → invalid rawValue → default
+		#expect(s.appTheme == .system)                      // empty → invalid rawValue → default
+		#expect(s.keepScreenAwake == true)
+		#expect(s.ownedProducts == Set(FeedProduct.allCases))   // own the full lineup on first launch
+	}
+
+	@Test func scalarSettingsPersistAcrossInstances() {
+		let ud = freshDefaults("test.persist")
+		let writer = FeedSettings(defaults: ud)
+		writer.volume = 22
+		writer.baseEC = 0.15
+		writer.ecUnit = .ppm700
+		writer.appTheme = .dark
+		writer.keepScreenAwake = false
+
+		let reader = FeedSettings(defaults: ud)   // fresh instance, same store
+		#expect(reader.volume == 22)
+		#expect(reader.baseEC == 0.15)
+		#expect(reader.ecUnit == .ppm700)
+		#expect(reader.appTheme == .dark)
+		#expect(reader.keepScreenAwake == false)   // exercises the `?? true` false branch on reload
+	}
+
+	@Test func setOwnedTogglesAndPersists() {
+		let ud = freshDefaults("test.owned")
+		let writer = FeedSettings(defaults: ud)
+		writer.setOwned(.cannaboost, false)
+		#expect(!writer.ownedProducts.contains(.cannaboost))
+		writer.setOwned(.cannaboost, true)
+		#expect(writer.ownedProducts.contains(.cannaboost))
+		writer.setOwned(.pk, false)
+
+		let reader = FeedSettings(defaults: ud)
+		#expect(!reader.ownedProducts.contains(.pk))         // removal survived the reload
+		#expect(reader.ownedProducts.contains(.cannaboost))  // re-add survived too
+	}
+
+	@Test func ownedProductsIgnoresUnknownRawValues() {
+		let ud = freshDefaults("test.ownedbad")
+		ud.set(["Cal-Mag", "Nonsense Brand"], forKey: "ownedProducts")
+		let s = FeedSettings(defaults: ud)
+		#expect(s.ownedProducts == [.calMag])   // unknown raw values are dropped, known kept
+	}
+
+	@Test func emptyOwnedProductsLoadsAsEmpty() {
+		let ud = freshDefaults("test.ownedempty")
+		ud.set([String](), forKey: "ownedProducts")   // a saved (empty) array, not "nothing saved"
+		let s = FeedSettings(defaults: ud)
+		#expect(s.ownedProducts.isEmpty)   // distinct from the first-launch all-owned default
+	}
+
+	@Test func disclaimerUnseenByDefaultThenPersistsAcknowledgement() {
+		let ud = freshDefaults("test.disclaimer")
+		let first = FeedSettings(defaults: ud)
+		#expect(first.hasSeenDisclaimer == false)   // first launch → popup should show
+		first.hasSeenDisclaimer = true              // user taps Continue with "don't show again"
+		let relaunch = FeedSettings(defaults: ud)
+		#expect(relaunch.hasSeenDisclaimer == true) // never auto-shows again
+	}
+}
+
+// AppInfo version formatting, tested against synthetic info dictionaries (no real bundle needed).
+struct AppInfoTests {
+	@Test func versionShowsMarketingOnly() {
+		#expect(AppInfo.version(["CFBundleShortVersionString": "1.0"]) == "v1.0")
+	}
+
+	@Test func versionAppendsBuildWhenItDiffers() {
+		#expect(AppInfo.version(["CFBundleShortVersionString": "1.0", "CFBundleVersion": "3"]) == "v1.0 (3)")
+	}
+
+	@Test func versionHidesBuildWhenSameAsMarketing() {
+		#expect(AppInfo.version(["CFBundleShortVersionString": "1.0", "CFBundleVersion": "1.0"]) == "v1.0")
+	}
+
+	@Test func versionFallsBackWhenMissing() {
+		#expect(AppInfo.version([:]) == "v—")
+		#expect(AppInfo.version(nil) == "v—")
 	}
 }
