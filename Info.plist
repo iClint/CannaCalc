@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Export compliance: the app uses no non-exempt encryption (it's fully offline and makes
+	     no network connections at all), so declare the exemption to skip the per-submission
+	     export-compliance prompt in App Store Connect. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- Modern launch screen (same as TentControl): a centred plant image over an adaptive
 	     background colour (LaunchBackground has light + dark variants). This base plist is
 	     merged with the build-setting-generated keys (GENERATE_INFOPLIST_FILE=YES). -->
