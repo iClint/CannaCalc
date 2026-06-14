@@ -46,8 +46,12 @@ struct DisclaimerView: View {
 
 	private var heading: some View {
 		HStack(spacing: 10) {
-			Image(systemName: "leaf.circle.fill")
-				.font(.largeTitle).foregroundStyle(Theme.accent)
+			// Our pot-plant silhouette (template asset), tinted with the accent.
+			Image("PotPlant")
+				.renderingMode(.template)
+				.resizable().scaledToFit()
+				.frame(width: 34, height: 34)
+				.foregroundStyle(Theme.accent)
 			VStack(alignment: .leading, spacing: 1) {
 				Text(AppInfo.name).font(.title2.weight(.bold)).foregroundStyle(Theme.primary)
 				Text(AppInfo.version()).font(.caption.monospacedDigit()).foregroundStyle(Theme.secondary)
