@@ -14,22 +14,39 @@ struct InputsCard: View {
 	private var abEach: Double { recipe.items.first { $0.name == FeedProduct.cocoA.rawValue }?.mlPerL ?? 0 }
 	private var calMag: Double { CannaCoco.calMag(waterEC: settings.baseEC) }
 	private var ownsCalMag: Bool { settings.ownedProducts.contains(.calMag) }
-	// Rough batch to mix for this phase from plants × pot size (just to size the recipe).
-	private var suggestedVolume: Double {
-		CannaCoco.suggestedBatchVolume(phase: phase, plants: settings.plantCount, potVolumeL: settings.potVolumeL)
-	}
+	@State private var showMixSheet = false
 
 	var body: some View {
 		VStack(spacing: 16) {
 			batchVolumeRow
+			mixHelpButton
 			if showDetails {
-				mixSizeSection
 				waterECRow
 				if phase.feedsNutrients { feedECControl }
 			}
 		}
 		.padding(16)
 		.glassCard()
+		.sheet(isPresented: $showMixSheet) {
+			MixVolumeSheet(settings: settings, phase: phase, colorScheme: settings.appTheme.colorScheme)
+		}
+	}
+
+	// Opens the "how much to mix?" guide — sizes the batch from plants × pot size for the phase.
+	private var mixHelpButton: some View {
+		Button { showMixSheet = true } label: {
+			HStack(spacing: 7) {
+				Image(systemName: "drop.fill").font(.subheadline)
+				Text("How much should I mix?").font(.subheadline.weight(.semibold))
+				Spacer()
+				Image(systemName: "chevron.right").font(.caption2.weight(.bold))
+			}
+			.foregroundStyle(Theme.accent)
+			.padding(.horizontal, 12).padding(.vertical, 9)
+			.frame(maxWidth: .infinity)
+			.background(Theme.accent.opacity(0.12), in: Capsule())
+		}
+		.buttonStyle(.plain)
 	}
 
 	// Batch volume stays visible; the chevron reveals the source water EC + feed EC controls.
@@ -49,46 +66,6 @@ struct InputsCard: View {
 				}
 			}
 			Slider(value: $settings.volume, in: 1...50, step: 1).tint(Theme.accent)
-		}
-	}
-
-	// Sizing helper: estimate how much to mix from plants × pot size, then "Use" it as the volume.
-	// Just sizes the recipe — not a watering guide; the grower trues it up by runoff.
-	private var mixSizeSection: some View {
-		VStack(spacing: 10) {
-			HStack {
-				Text("Plants").font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
-				Spacer()
-				Text("\(settings.plantCount)")
-					.font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
-				Stepper("", value: $settings.plantCount, in: 1...50).labelsHidden().tint(Theme.accent)
-			}
-			VStack(spacing: 6) {
-				HStack {
-					Text("Pot size").font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
-					Spacer()
-					Text(String(format: "%.0f L", settings.potVolumeL))
-						.font(.subheadline.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
-				}
-				Slider(value: $settings.potVolumeL, in: 1...50, step: 1).tint(Theme.accent)
-			}
-			HStack {
-				VStack(alignment: .leading, spacing: 1) {
-					Text("Suggested mix").font(.caption.weight(.semibold)).foregroundStyle(Theme.primary)
-					Text("≈ \(Int(suggestedVolume)) L for \(settings.plantCount) plant\(settings.plantCount == 1 ? "" : "s")")
-						.font(.caption2).foregroundStyle(Theme.secondary)
-				}
-				Spacer()
-				Button { settings.volume = suggestedVolume } label: {
-					Text("Use").font(.caption.weight(.bold)).foregroundStyle(Theme.accent)
-						.padding(.horizontal, 14).padding(.vertical, 7)
-						.background(Theme.accent.opacity(0.14), in: Capsule())
-				}
-				.buttonStyle(.plain)
-			}
-			Text("Feed each plant to ~10–20% runoff; ran dry first? mix a bit more, lots left? mix less.")
-				.font(.caption2).foregroundStyle(Theme.secondary)
-				.frame(maxWidth: .infinity, alignment: .leading)
 		}
 	}
 

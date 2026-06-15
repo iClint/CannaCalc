@@ -136,15 +136,17 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
-	// Rough feed volume per plant as a fraction of pot volume, per watering — general coco
-	// practice (feed to 10–20% runoff at ~5–6% of pot), NOT from CANNA's chart. A little lower
-	// for tiny seedlings and the flush, a touch higher mid-bloom.
-	var feedFractionOfPot: Double {
+	// Rough DAILY water use per plant as a fraction of pot volume — climbs steeply from seedling
+	// to peak bloom (a flowering plant drinks several times what a seedling does). General coco
+	// practice, NOT from CANNA's chart, and very climate/plant-size dependent — a starting guide.
+	var dailyWaterFractionOfPot: Double {
 		switch self {
-		case .startRooting: return 0.04
-		case .vegetativeI: return 0.05
-		case .vegetativeII, .generativeI, .generativeII, .generativeIII: return 0.06
-		case .generativeIV: return 0.05
+		case .startRooting: return 0.05
+		case .vegetativeI: return 0.10
+		case .vegetativeII: return 0.15
+		case .generativeI: return 0.20
+		case .generativeII, .generativeIII: return 0.25
+		case .generativeIV: return 0.15   // flush, tapering off
 		case .harvest: return 0
 		}
 	}
@@ -239,10 +241,11 @@ enum CannaCoco {
 
 	static let batchVolumeRange = 1.0...50.0   // litres the batch slider allows
 
-	// Rough batch volume (L) to mix for one watering of all plants — just to size the recipe.
-	// ~5–6% of pot per plant (feed to ~10–20% runoff); the grower trues it up by runoff.
-	static func suggestedBatchVolume(phase: GrowthPhase, plants: Int, potVolumeL: Double) -> Double {
-		let raw = (Double(plants) * potVolumeL * phase.feedFractionOfPot).rounded()
+	// Rough DAILY volume (L) to mix for all plants at this phase — just to size the recipe batch.
+	// plants × pot size × the phase's daily-use fraction; the grower splits it across waterings
+	// and trues it up by runoff. Clamped to the batch slider range.
+	static func suggestedDailyVolume(phase: GrowthPhase, plants: Int, potVolumeL: Double) -> Double {
+		let raw = (Double(plants) * potVolumeL * phase.dailyWaterFractionOfPot).rounded()
 		return min(batchVolumeRange.upperBound, max(batchVolumeRange.lowerBound, raw))
 	}
 

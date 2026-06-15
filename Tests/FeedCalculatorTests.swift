@@ -160,25 +160,27 @@ struct FeedCalculatorTests {
 		#expect(range.lowerBound < 2.2 && 2.2 < range.upperBound)   // default sits inside the band
 	}
 
-	// MARK: - Suggested batch volume (plants × pot size, to size the recipe)
+	// MARK: - Suggested daily volume (plants × pot size × phase use, to size the recipe)
 
-	@Test func suggestedBatchScalesWithPlantsAndPot() {
-		// ~6% of pot per plant for a mid phase: 4 × 11 × 0.06 = 2.64 → 3 L.
-		#expect(CannaCoco.suggestedBatchVolume(phase: .vegetativeII, plants: 4, potVolumeL: 11)
-			== (4.0 * 11 * 0.06).rounded())
+	@Test func suggestedDailyVolumeScalesWithPlantsAndPot() {
+		// Veg II ≈ 15% of pot/day per plant: 4 × 11 × 0.15 = 6.6 → 7 L.
+		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 4, potVolumeL: 11)
+			== (4.0 * 11 * 0.15).rounded())
 		// Doubling the plants ~doubles the mix.
-		#expect(CannaCoco.suggestedBatchVolume(phase: .vegetativeII, plants: 8, potVolumeL: 11)
-			== (8.0 * 11 * 0.06).rounded())
+		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 8, potVolumeL: 11)
+			== (8.0 * 11 * 0.15).rounded())
 	}
 
-	@Test func suggestedBatchClampsToSliderRange() {
-		#expect(CannaCoco.suggestedBatchVolume(phase: .generativeII, plants: 50, potVolumeL: 50) == 50)  // capped
-		#expect(CannaCoco.suggestedBatchVolume(phase: .startRooting, plants: 1, potVolumeL: 1) == 1)      // floored
+	@Test func suggestedDailyVolumeClampsToSliderRange() {
+		#expect(CannaCoco.suggestedDailyVolume(phase: .generativeII, plants: 50, potVolumeL: 50) == 50)  // capped
+		#expect(CannaCoco.suggestedDailyVolume(phase: .startRooting, plants: 1, potVolumeL: 1) == 1)      // floored
 	}
 
-	@Test func rootingFeedsLessThanBloomForSameSetup() {
-		#expect(CannaCoco.suggestedBatchVolume(phase: .startRooting, plants: 10, potVolumeL: 20)
-			< CannaCoco.suggestedBatchVolume(phase: .generativeII, plants: 10, potVolumeL: 20))
+	@Test func dailyVolumeClimbsFromRootingToBloom() {
+		// The whole point: a seedling drinks far less per day than a flowering plant.
+		let setup: (GrowthPhase) -> Double = { CannaCoco.suggestedDailyVolume(phase: $0, plants: 10, potVolumeL: 20) }
+		#expect(setup(.startRooting) < setup(.vegetativeII))
+		#expect(setup(.vegetativeII) < setup(.generativeII))
 	}
 
 	// MARK: - CalMag (water-EC driven, max 1.1 ml/L)
