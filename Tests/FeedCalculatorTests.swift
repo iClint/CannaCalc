@@ -136,6 +136,22 @@ struct FeedCalculatorTests {
 		#expect(abs(r.targetEC - 0.4) < 1e-9)   // flush has no A&B, so nothing to reserve
 	}
 
+	@Test func ecRangeBoundsAreReachable() {
+		// Every slider end must be an EC the band can actually hit — no rounding overshoot.
+		for phase in GrowthPhase.allCases where phase.feedsNutrients {
+			let range = CannaCoco.ecRange(phase)
+			#expect(abs(make(phase, targetEC: range.upperBound).targetEC - range.upperBound) < 1e-9)
+			#expect(abs(make(phase, targetEC: range.lowerBound).targetEC - range.lowerBound) < 1e-9)
+		}
+	}
+
+	@Test func vegIIECRangeIsTrueAchievableBand() {
+		// The reported case: 1.8-nutrition phase tops out at 2.65, not a rounded-up 2.7.
+		let range = CannaCoco.ecRange(.vegetativeII)
+		#expect(abs(range.lowerBound - 1.75) < 1e-9)
+		#expect(abs(range.upperBound - 2.65) < 1e-9)
+	}
+
 	@Test func ecRangeAndDefault() {
 		#expect(CannaCoco.defaultEC(.startRooting) == 2.0)     // 1.6 nutrition + 0.4 water
 		#expect(CannaCoco.defaultEC(.vegetativeII) == 2.2)     // 1.8 + 0.4

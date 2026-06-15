@@ -66,6 +66,19 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
+	// Illustration for the phase guide. SF Symbols for now (license-safe, theme-tintable);
+	// swap for richer artwork later without touching call sites.
+	var symbol: String {
+		switch self {
+		case .startRooting: return "leaf"
+		case .vegetativeI: return "leaf.fill"
+		case .vegetativeII: return "tree.fill"
+		case .generativeI, .generativeII, .generativeIII: return "camera.macro"
+		case .generativeIV: return "drop.fill"
+		case .harvest: return "scissors"
+		}
+	}
+
 	// Light schedule for the phase (the grower's table).
 	var light: String {
 		switch self {
@@ -197,12 +210,15 @@ enum CannaCoco {
 		return phase.ecNutrition * (abEach / phase.cocoAB) + idealWaterEC
 	}
 
-	// The achievable TARGET-EC range for a phase (the A&B band mapped to total EC, rounded to
-	// 0.1 for a 1-dp slider). Falls back to ±0.1 if the band collapses (non-nutrient phases).
+	// The achievable TARGET-EC range for a phase (the A&B band mapped to total EC). Bounds are
+	// rounded INWARD to 0.05 — low end up, high end down — so every slider stop is an EC the band
+	// can actually hit; rounding outward would promise an unreachable value at the ends (e.g. a
+	// 2.7 cap on a phase that maxes at 2.65). Falls back to ±0.05 if the band collapses.
 	static func ecRange(_ phase: GrowthPhase) -> ClosedRange<Double> {
 		let band = abBand(phase)
-		let lo = round1(ecForAB(phase, band.min)), hi = round1(ecForAB(phase, band.max))
-		return lo < hi ? lo...hi : (lo - 0.1)...(lo + 0.1)
+		let lo = (ecForAB(phase, band.min) * 20).rounded(.up) / 20
+		let hi = (ecForAB(phase, band.max) * 20).rounded(.down) / 20
+		return lo < hi ? lo...hi : (lo - 0.05)...(lo + 0.05)
 	}
 
 	// CANNA's recommended total EC for the phase (slider default), to 1 dp.

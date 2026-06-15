@@ -77,7 +77,7 @@ struct InputsCard: View {
 					.font(.subheadline.weight(.bold).monospacedDigit())
 					.foregroundStyle(formatter.tint(targetEC, phase: phase))
 			}
-			Slider(value: $targetEC, in: range, step: 0.1).tint(formatter.tint(targetEC, phase: phase))
+			Slider(value: $targetEC, in: range, step: 0.05).tint(formatter.tint(targetEC, phase: phase))
 			HStack {
 				Text(formatter.value(range.lowerBound)).font(.caption2).foregroundStyle(.cyan)
 				Spacer()

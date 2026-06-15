@@ -30,7 +30,7 @@ struct CalculatorView: View {
 			ScrollView {
 				VStack(spacing: 14) {
 					HeaderBar { showSettings = true }
-					PhaseSummaryCard(phase: phase) { showPhasePicker = true }
+					PhaseSummaryCard(phase: phase, colorScheme: settings.appTheme.colorScheme) { showPhasePicker = true }
 					if phase.isHarvest {
 						HarvestCard()
 					} else {
