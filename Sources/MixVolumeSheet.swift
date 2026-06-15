@@ -22,6 +22,7 @@ struct MixVolumeSheet: View {
 						plantsCard
 						potCard
 						resultCard
+						shelfLifeWarning
 						Text("Rough starting guide for **\(phase.rawValue)** — actual use depends on plant size, light and climate. Split it across your day's waterings and feed each plant to ~10–20% runoff; ran dry early? mix more, lots left over? mix less.")
 							.font(.caption2).foregroundStyle(Theme.secondary)
 							.frame(maxWidth: .infinity, alignment: .leading)
@@ -39,6 +40,20 @@ struct MixVolumeSheet: View {
 		}
 		.preferredColorScheme(colorScheme)
 		.presentationDetents([.large])   // open full-height, not a half sheet
+	}
+
+	// Mixed feed doesn't keep — warn against over-mixing.
+	private var shelfLifeWarning: some View {
+		HStack(alignment: .top, spacing: 10) {
+			Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+			Text("Mix only what you'll use within ~24 hours. A standing batch drifts in pH and its organic/enzyme additives (Rhizotonic, Cannazym, CannaBoost) break down — don't keep it more than a day or two.")
+				.font(.caption2).foregroundStyle(Theme.primary)
+				.fixedSize(horizontal: false, vertical: true)
+		}
+		.frame(maxWidth: .infinity, alignment: .leading)
+		.padding(14)
+		.background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+		.overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.orange.opacity(0.35)))
 	}
 
 	private var plantsCard: some View {
