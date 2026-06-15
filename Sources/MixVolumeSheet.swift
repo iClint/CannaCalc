@@ -61,6 +61,9 @@ struct MixVolumeSheet: View {
 					.font(.title3.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
 			}
 			Slider(value: $settings.potVolumeL, in: 1...50, step: 1).tint(Theme.accent)
+			Text("The container they're in right now — a seedling's small cup, not its final pot.")
+				.font(.caption2).foregroundStyle(Theme.secondary)
+				.frame(maxWidth: .infinity, alignment: .leading)
 		}
 		.padding(16).glassCard()
 	}

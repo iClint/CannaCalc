@@ -163,12 +163,18 @@ struct FeedCalculatorTests {
 	// MARK: - Suggested daily volume (plants × pot size × phase use, to size the recipe)
 
 	@Test func suggestedDailyVolumeScalesWithPlantsAndPot() {
-		// Veg II ≈ 15% of pot/day per plant: 4 × 11 × 0.15 = 6.6 → 7 L.
+		// Veg II ≈ 10% of pot/day per plant: 4 × 11 × 0.10 = 4.4 → 4 L.
 		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 4, potVolumeL: 11)
-			== (4.0 * 11 * 0.15).rounded())
+			== (4.0 * 11 * 0.10).rounded())
 		// Doubling the plants ~doubles the mix.
 		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 8, potVolumeL: 11)
-			== (8.0 * 11 * 0.15).rounded())
+			== (8.0 * 11 * 0.10).rounded())
+	}
+
+	@Test func seedlingsUseFarLessThanFinalPotFraction() {
+		// The reported case: 4 seedlings should not be told to mix ~4 L. Rooting is ~2% of pot.
+		#expect(CannaCoco.suggestedDailyVolume(phase: .startRooting, plants: 4, potVolumeL: 20)
+			== (4.0 * 20 * 0.02).rounded())   // ≈ 2 L, not 4
 	}
 
 	@Test func suggestedDailyVolumeClampsToSliderRange() {

@@ -141,11 +141,12 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 	// practice, NOT from CANNA's chart, and very climate/plant-size dependent — a starting guide.
 	var dailyWaterFractionOfPot: Double {
 		switch self {
-		case .startRooting: return 0.05
-		case .vegetativeI: return 0.10
-		case .vegetativeII: return 0.15
-		case .generativeI: return 0.20
-		case .generativeII, .generativeIII: return 0.25
+		case .startRooting: return 0.02   // seedlings/clones sip — tiny roots in the container
+		case .vegetativeI: return 0.05
+		case .vegetativeII: return 0.10
+		case .generativeI: return 0.15
+		case .generativeII: return 0.25
+		case .generativeIII: return 0.22
 		case .generativeIV: return 0.15   // flush, tapering off
 		case .harvest: return 0
 		}
