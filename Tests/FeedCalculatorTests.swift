@@ -160,33 +160,30 @@ struct FeedCalculatorTests {
 		#expect(range.lowerBound < 2.2 && 2.2 < range.upperBound)   // default sits inside the band
 	}
 
-	// MARK: - Suggested daily volume (plants × pot size × phase use, to size the recipe)
+	// MARK: - Suggested watering volume (water to runoff — container-driven, per watering)
 
-	@Test func suggestedDailyVolumeScalesWithPlantsAndPot() {
-		// Veg II ≈ 10% of pot/day per plant: 4 × 11 × 0.10 = 4.4 → 4 L.
-		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 4, potVolumeL: 11)
-			== (4.0 * 11 * 0.10).rounded())
-		// Doubling the plants ~doubles the mix.
-		#expect(CannaCoco.suggestedDailyVolume(phase: .vegetativeII, plants: 8, potVolumeL: 11)
-			== (8.0 * 11 * 0.10).rounded())
+	@Test func suggestedWateringVolumeScalesWithPlantsAndContainer() {
+		// ~6% of container per watering: 4 × 11 × 0.06 = 2.64 → 3 L.
+		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 11) == (4.0 * 11 * 0.06).rounded())
+		#expect(CannaCoco.suggestedWateringVolume(plants: 8, potVolumeL: 11) == (8.0 * 11 * 0.06).rounded())
+		// Bigger container → more per watering.
+		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 20)
+			> CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 11))
 	}
 
-	@Test func seedlingsUseFarLessThanFinalPotFraction() {
-		// The reported case: 4 seedlings should not be told to mix ~4 L. Rooting is ~2% of pot.
-		#expect(CannaCoco.suggestedDailyVolume(phase: .startRooting, plants: 4, potVolumeL: 20)
-			== (4.0 * 20 * 0.02).rounded())   // ≈ 2 L, not 4
+	@Test func suggestedWateringVolumeClampsToSliderRange() {
+		#expect(CannaCoco.suggestedWateringVolume(plants: 50, potVolumeL: 50) == 50)   // capped
+		#expect(CannaCoco.suggestedWateringVolume(plants: 1, potVolumeL: 1) == 1)       // floored
 	}
 
-	@Test func suggestedDailyVolumeClampsToSliderRange() {
-		#expect(CannaCoco.suggestedDailyVolume(phase: .generativeII, plants: 50, potVolumeL: 50) == 50)  // capped
-		#expect(CannaCoco.suggestedDailyVolume(phase: .startRooting, plants: 1, potVolumeL: 1) == 1)      // floored
+	@Test func seedlingInSmallContainerStaysSmall() {
+		// The reported case: it's about the container, not the stage. 4 seedlings in 0.5 L cells
+		// → tiny (floored to the 1 L minimum), not litres each.
+		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 0.5) == 1)
 	}
 
-	@Test func dailyVolumeClimbsFromRootingToBloom() {
-		// The whole point: a seedling drinks far less per day than a flowering plant.
-		let setup: (GrowthPhase) -> Double = { CannaCoco.suggestedDailyVolume(phase: $0, plants: 10, potVolumeL: 20) }
-		#expect(setup(.startRooting) < setup(.vegetativeII))
-		#expect(setup(.vegetativeII) < setup(.generativeII))
+	@Test func everyPhaseHasAWateringFrequencyHint() {
+		for phase in GrowthPhase.allCases { #expect(!phase.wateringsPerDayHint.isEmpty) }
 	}
 
 	// MARK: - CalMag (water-EC driven, max 1.1 ml/L)

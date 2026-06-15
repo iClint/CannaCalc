@@ -136,19 +136,18 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
-	// Rough DAILY water use per plant as a fraction of pot volume — climbs steeply from seedling
-	// to peak bloom (a flowering plant drinks several times what a seedling does). General coco
-	// practice, NOT from CANNA's chart, and very climate/plant-size dependent — a starting guide.
-	var dailyWaterFractionOfPot: Double {
+	// Rough how-OFTEN-to-water hint for the phase. Coco is watered to runoff each time; as the
+	// plant grows it dries the medium faster, so frequency climbs — but the per-watering VOLUME
+	// is set by the container, not the stage. General practice, not from CANNA's chart.
+	var wateringsPerDayHint: String {
 		switch self {
-		case .startRooting: return 0.02   // seedlings/clones sip — tiny roots in the container
-		case .vegetativeI: return 0.05
-		case .vegetativeII: return 0.10
-		case .generativeI: return 0.15
-		case .generativeII: return 0.25
-		case .generativeIII: return 0.22
-		case .generativeIV: return 0.15   // flush, tapering off
-		case .harvest: return 0
+		case .startRooting: return "about once a day"
+		case .vegetativeI: return "1–2× a day"
+		case .vegetativeII: return "2–3× a day"
+		case .generativeI: return "3–4× a day"
+		case .generativeII, .generativeIII: return "3–5× a day"
+		case .generativeIV: return "2–3× a day"
+		case .harvest: return "—"
 		}
 	}
 
@@ -240,13 +239,15 @@ enum CannaCoco {
 	// CANNA's recommended total EC for the phase (slider default), to 1 dp.
 	static func defaultEC(_ phase: GrowthPhase) -> Double { round1(ecForAB(phase, phase.cocoAB)) }
 
-	static let batchVolumeRange = 1.0...50.0   // litres the batch slider allows
+	static let batchVolumeRange = 1.0...50.0      // litres the batch slider allows
+	static let wateringFractionToRunoff = 0.06    // ~6% of the container per watering, to ~10–20% runoff
 
-	// Rough DAILY volume (L) to mix for all plants at this phase — just to size the recipe batch.
-	// plants × pot size × the phase's daily-use fraction; the grower splits it across waterings
-	// and trues it up by runoff. Clamped to the batch slider range.
-	static func suggestedDailyVolume(phase: GrowthPhase, plants: Int, potVolumeL: Double) -> Double {
-		let raw = (Double(plants) * potVolumeL * phase.dailyWaterFractionOfPot).rounded()
+	// Rough volume (L) to mix for ONE watering of all plants, to ~10–20% runoff. Driven by the
+	// CONTAINER the plants are in now — coco is watered to keep the medium moist and flush salts,
+	// so volume scales with the substrate, not the plant's drink or the stage. Clamped to the
+	// batch slider range.
+	static func suggestedWateringVolume(plants: Int, potVolumeL: Double) -> Double {
+		let raw = (Double(plants) * potVolumeL * wateringFractionToRunoff).rounded()
 		return min(batchVolumeRange.upperBound, max(batchVolumeRange.lowerBound, raw))
 	}
 

@@ -8,10 +8,10 @@ struct MixVolumeSheet: View {
 	let colorScheme: ColorScheme?
 	@Environment(\.dismiss) private var dismiss
 
-	private var perDay: Double {
-		CannaCoco.suggestedDailyVolume(phase: phase, plants: settings.plantCount, potVolumeL: settings.potVolumeL)
+	private var perWatering: Double {
+		CannaCoco.suggestedWateringVolume(plants: settings.plantCount, potVolumeL: settings.potVolumeL)
 	}
-	private var perPlant: Double { settings.potVolumeL * phase.dailyWaterFractionOfPot }
+	private var perPlant: Double { settings.potVolumeL * CannaCoco.wateringFractionToRunoff }
 
 	var body: some View {
 		NavigationStack {
@@ -23,7 +23,7 @@ struct MixVolumeSheet: View {
 						potCard
 						resultCard
 						shelfLifeWarning
-						Text("Rough starting guide for **\(phase.rawValue)** — actual use depends on plant size, light and climate. Split it across your day's waterings and feed each plant to ~10–20% runoff; ran dry early? mix more, lots left over? mix less.")
+						Text("Coco is watered to ~10–20% runoff to keep it moist and flush salts, so this is **per watering** — set by the container size, not the plant's drink. At **\(phase.rawValue)** you'd typically water **\(phase.wateringsPerDayHint)**; mix a fresh batch each time and adjust to your actual runoff.")
 							.font(.caption2).foregroundStyle(Theme.secondary)
 							.frame(maxWidth: .infinity, alignment: .leading)
 					}
@@ -85,14 +85,15 @@ struct MixVolumeSheet: View {
 
 	private var resultCard: some View {
 		VStack(spacing: 10) {
-			Text("MIX ABOUT")
+			Text("MIX PER WATERING")
 				.font(.system(size: 11, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.secondary)
-			Text("\(Int(perDay)) L / day")
+			Text("\(Int(perWatering)) L")
 				.font(.system(size: 38, weight: .bold).monospacedDigit()).foregroundStyle(Theme.accent)
-			Text("≈ \(String(format: "%.1f", perPlant)) L per plant today")
+			Text("≈ \(String(format: "%.1f", perPlant)) L per plant, to ~10–20% runoff")
 				.font(.caption).foregroundStyle(Theme.secondary)
+				.multilineTextAlignment(.center)
 			Button {
-				settings.volume = perDay
+				settings.volume = perWatering
 				dismiss()
 			} label: {
 				Text("Use as batch volume")
