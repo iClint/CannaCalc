@@ -1,6 +1,6 @@
 import Testing
 import SwiftUI
-@testable import CocoFeed
+@testable import CannaCalc
 
 // CANNA Coco feed logic, built verbatim from the CANNA COCO GROW SCHEDULE (AU, V25.01).
 // Per-phase chart doses + CalMag (water-EC driven) + the target-EC band + pH-up headroom.
