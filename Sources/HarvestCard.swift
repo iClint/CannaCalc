@@ -8,7 +8,7 @@ struct HarvestCard: View {
 				.font(.system(size: 34)).foregroundStyle(Theme.accent)
 				.shadow(color: Theme.accent.opacity(0.5), radius: 8)
 			Text("Time to chop").font(.headline.weight(.bold)).foregroundStyle(Theme.primary)
-			Text(GrowthPhase.harvest.trigger)
+			Text(GrowthPhase.harvest.detail)
 				.font(.subheadline).foregroundStyle(Theme.secondary)
 				.multilineTextAlignment(.center)
 			Text("No feed — harvest after any final flush.")

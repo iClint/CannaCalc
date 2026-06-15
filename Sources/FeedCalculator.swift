@@ -2,8 +2,8 @@ import Foundation
 
 // CANNA Coco feed calculator, built verbatim from the official CANNA COCO GROW SCHEDULE
 // (Australia, V25.01). Every per-phase number is the chart's — Coco A&B, the additive
-// doses, and the EC. Phases use the grower's own names + "trigger to enter" observations
-// so a stage is chosen by what the plant is doing.
+// doses, and the EC. Each phase carries a brief, CANNA-aligned `summary` plus a plain-language
+// `detail` (the in-app tooltip) so a beginner can tell which stage their plant is in.
 //
 // The grower feeds CANNA's exact value by default. The feed-EC control moves Coco A&B (and
 // EC) DOWN to a gentle minimum (−25%, for a stressed plant) or UP toward a strong maximum,
@@ -22,25 +22,47 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 
 	var id: String { rawValue }
 
-	// "Trigger to ENTER" — what you see in the tent that says it's time for this phase.
-	var trigger: String {
+	// Brief, CANNA-aligned description of the stage — shown on the phase card and picker.
+	var summary: String {
 		switch self {
 		case .startRooting:
-			return "Germinated seed (taproot showing) set in substrate / seedling just emerged."
+			return "Seedlings or fresh cuttings settling in and growing roots."
 		case .vegetativeI:
-			return "Cotyledons open + 1st true-leaf set + active new growth — roots have taken hold."
+			return "Leafy growth under 18 h light, building the plant's frame."
 		case .vegetativeII:
-			return "You flip to 12/12 — canopy at pre-flower target (ScrOG ~70–80% full, training set), plant ~½–⅔ final height."
+			return "Switch to 12/12 light to trigger flowering."
 		case .generativeI:
-			return "Stretch stops (apex <~5 mm/day for 2–3 days, height plateaued) + white pistil clusters at bud sites + screen ~90% full."
+			return "Early bloom — the plant stretches and sets its first flowers."
 		case .generativeII:
-			return "Flower clusters established/elongated + calyxes swelling/stacking; pistils dense, still white; ~3–4 wk pre-finish."
+			return "Peak bloom — the short PK 13/14 boost, about 3 weeks before harvest."
 		case .generativeIII:
-			return "PK week done; buds denser/heavier; first pistils darkening (orange) on older/lower flowers."
+			return "Flowers fill out and gain weight after the PK boost."
 		case .generativeIV:
-			return "Trichomes clear → cloudy (loupe); pistils ~50–70% darkened/curling; bud swell plateaus; fans yellowing."
+			return "Final ripening — flush with plain feed, no base nutrients."
 		case .harvest:
-			return "Trichomes ~70% cloudy + 20–30% amber (loupe); pistils ~70–90% darkened."
+			return "Ripe and ready to cut."
+		}
+	}
+
+	// Plain-language, beginner-friendly detail (the tooltip), following CANNA's grow guide.
+	var detail: String {
+		switch self {
+		case .startRooting:
+			return "The first week or two: roots are taking hold and top growth is slow. Feed gently and use Rhizotonic to build a strong root system under 18 hours of light. Move on once you see active new leaves."
+		case .vegetativeI:
+			return "Under 18 h light the plant photosynthesises hard and stacks up the leaves and stems it needs to flower. Feed full Coco A&B with Rhizotonic and Cannazym. This stage can run 1–4 weeks depending on the size you want."
+		case .vegetativeII:
+			return "Once the plant has filled out, drop the lights to 12 hours on / 12 off to tell it to start flowering. Keep feeding at full strength; some varieties take up to 4 weeks to make the switch."
+		case .generativeI:
+			return "After the light switch the plant stretches and forms its first flowers, shifting energy from leaves to bloom. CannaBoost comes in here to support flowering."
+		case .generativeII:
+			return "About 3 weeks before harvest, once the stretch has stopped and buds are swelling, add PK 13/14 for 3–6 days only to drive flower development. Too early can block Cal-Mag uptake; too long can affect flavour."
+		case .generativeIII:
+			return "The PK boost is done. Ease the base feed back slightly while the flowers keep gaining density and weight. Keep Coco A&B, Cannazym and CannaBoost going."
+		case .generativeIV:
+			return "The last 1–2 weeks. Stop the base A&B and flush with pH'd water (around 5.5–6.2), leaving only Cannazym/CannaBoost, to rinse stored salts and improve the final taste."
+		case .harvest:
+			return "Flowering is complete. Give a final flush of plain water if you haven't already, check ripeness, then harvest. No feeding at this stage."
 		}
 	}
 

@@ -53,9 +53,10 @@ struct FeedCalculatorTests {
 		}
 	}
 
-	@Test func everyPhaseHasTriggerAndLight() {
+	@Test func everyPhaseHasDescriptionsAndLight() {
 		for phase in GrowthPhase.allCases {
-			#expect(!phase.trigger.isEmpty)
+			#expect(!phase.summary.isEmpty)
+			#expect(!phase.detail.isEmpty)
 			#expect(!phase.light.isEmpty)
 		}
 		#expect(GrowthPhase.startRooting.light == "18 h")

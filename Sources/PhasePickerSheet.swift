@@ -44,7 +44,7 @@ struct PhasePickerSheet: View {
 						.padding(.horizontal, 8).padding(.vertical, 3)
 						.background((selected ? Theme.accent : Theme.secondary).opacity(0.14), in: Capsule())
 				}
-				Text(candidate.trigger)
+				Text(candidate.summary)
 					.font(.caption2).foregroundStyle(Theme.secondary)
 					.fixedSize(horizontal: false, vertical: true)
 					.frame(maxWidth: .infinity, alignment: .leading)
