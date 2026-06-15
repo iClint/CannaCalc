@@ -56,6 +56,24 @@ extension View {
 	func glassCard() -> some View { modifier(GlassCard()) }
 }
 
+// Light-schedule pill with a little sun (e.g. ☀︎ 18 h, ☀︎ 12/12). No sun for "—" (harvest).
+struct LightBadge: View {
+	let light: String
+	var tint: Color = Theme.accent
+
+	var body: some View {
+		HStack(spacing: 3) {
+			if light != "—" {
+				Image(systemName: "sun.max.fill").font(.system(size: 9, weight: .bold))
+			}
+			Text(light).font(.caption2.weight(.semibold))
+		}
+		.foregroundStyle(tint)
+		.padding(.horizontal, 8).padding(.vertical, 3)
+		.background(tint.opacity(0.14), in: Capsule())
+	}
+}
+
 // A glassCard over the adaptive background, plus accent / primary / secondary swatches, so the
 // theme can be eyeballed in both appearances from the Xcode canvas.
 private struct ThemePreview: View {

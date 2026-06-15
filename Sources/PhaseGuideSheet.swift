@@ -18,8 +18,11 @@ struct PhaseGuideSheet: View {
 							Text(phase.rawValue)
 								.font(.title2.weight(.bold)).foregroundStyle(Theme.primary)
 								.multilineTextAlignment(.center)
-							Text(phase.light == "—" ? "No feed" : "Light · \(phase.light)")
-								.font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+							HStack(spacing: 5) {
+								if phase.light != "—" { Image(systemName: "sun.max.fill") }
+								Text(phase.light == "—" ? "No feed" : "Light · \(phase.light)")
+							}
+							.font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
 						}
 						Text(phase.detail)
 							.font(.body).foregroundStyle(Theme.primary)

@@ -22,10 +22,7 @@ struct PhaseSummaryCard: View {
 					Text(phase.rawValue).font(.headline.weight(.bold)).foregroundStyle(Theme.primary)
 				}
 				Spacer()
-				Text(phase.light)
-					.font(.caption2.weight(.semibold)).foregroundStyle(Theme.accent)
-					.padding(.horizontal, 8).padding(.vertical, 3)
-					.background(Theme.accent.opacity(0.14), in: Capsule())
+				LightBadge(light: phase.light)
 				infoButton
 				Image(systemName: "chevron.up.chevron.down")
 					.font(.caption.weight(.bold)).foregroundStyle(Theme.accent)

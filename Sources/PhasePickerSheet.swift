@@ -38,11 +38,7 @@ struct PhasePickerSheet: View {
 					Text(candidate.rawValue).font(.subheadline.weight(.bold))
 						.foregroundStyle(selected ? Theme.accent : Theme.primary)
 					Spacer()
-					Text(candidate.light)
-						.font(.caption2.weight(.semibold))
-						.foregroundStyle(selected ? Theme.accent : Theme.secondary)
-						.padding(.horizontal, 8).padding(.vertical, 3)
-						.background((selected ? Theme.accent : Theme.secondary).opacity(0.14), in: Capsule())
+					LightBadge(light: candidate.light, tint: selected ? Theme.accent : Theme.secondary)
 				}
 				Text(candidate.summary)
 					.font(.caption2).foregroundStyle(Theme.secondary)
