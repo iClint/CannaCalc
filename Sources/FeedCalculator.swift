@@ -239,18 +239,6 @@ enum CannaCoco {
 	// CANNA's recommended total EC for the phase (slider default), to 1 dp.
 	static func defaultEC(_ phase: GrowthPhase) -> Double { round1(ecForAB(phase, phase.cocoAB)) }
 
-	static let batchVolumeRange = 1.0...50.0      // litres the batch slider allows
-	static let wateringFractionToRunoff = 0.06    // ~6% of the container per watering, to ~10–20% runoff
-
-	// Rough volume (L) to mix for ONE watering of all plants, to ~10–20% runoff. Driven by the
-	// CONTAINER the plants are in now — coco is watered to keep the medium moist and flush salts,
-	// so volume scales with the substrate, not the plant's drink or the stage. Clamped to the
-	// batch slider range.
-	static func suggestedWateringVolume(plants: Int, potVolumeL: Double) -> Double {
-		let raw = (Double(plants) * potVolumeL * wateringFractionToRunoff).rounded()
-		return min(batchVolumeRange.upperBound, max(batchVolumeRange.lowerBound, raw))
-	}
-
 	// Back-solve the A&B dose to hit a target total EC, clamped to the phase's safe band.
 	// Non-nutrient phases (flush/harvest) ignore the target and dose no A&B.
 	static func abEach(_ phase: GrowthPhase, targetEC: Double) -> Double {

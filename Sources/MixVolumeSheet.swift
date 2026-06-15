@@ -1,17 +1,11 @@
 import SwiftUI
 
-// "How much to mix?" — a rough guide that sizes the recipe batch from plant count, pot size and
-// the current phase's daily water use. Not a watering schedule; the grower trues it up by runoff.
+// Explains how watering coco works — you water to runoff and adjust, rather than pre-calculating
+// a fixed amount — and warns that a mixed batch doesn't keep. No calculator.
 struct MixVolumeSheet: View {
-	@ObservedObject var settings: FeedSettings
 	let phase: GrowthPhase
 	let colorScheme: ColorScheme?
 	@Environment(\.dismiss) private var dismiss
-
-	private var perWatering: Double {
-		CannaCoco.suggestedWateringVolume(plants: settings.plantCount, potVolumeL: settings.potVolumeL)
-	}
-	private var perPlant: Double { settings.potVolumeL * CannaCoco.wateringFractionToRunoff }
 
 	var body: some View {
 		NavigationStack {
@@ -19,11 +13,16 @@ struct MixVolumeSheet: View {
 				Theme.bg.ignoresSafeArea()
 				ScrollView {
 					VStack(spacing: 16) {
-						plantsCard
-						potCard
-						resultCard
+						section("drop.fill", "WATER TO RUNOFF",
+						        "Water to about 10–20% runoff every time — a little draining from the bottom. That flushes out salts that would otherwise build up and keeps the root-zone EC and pH steady. Testing that runoff is how you'd check them.")
+						section("waterbottle.fill", "HOW MUCH PER WATERING",
+						        "Coco stays nearly saturated, so each watering just tops it up — roughly 5% of the container is enough to get runoff. If it takes a lot more than that, it dried out too far between waterings: water more OFTEN, not more each time.")
+						section("clock.fill", "HOW OFTEN",
+						        "Don't water it like soil and wait for it to dry — the surface should never go dry or pale. Water again once it's given up a little moisture: about once a day for seedlings, rising to 3–5× a day in full flower. At \(phase.rawValue), usually \(phase.wateringsPerDayHint).")
+						section("arrow.up.bin.fill", "MATCH POT TO PLANT",
+						        "A seedling in a big pot stays wet too long and drowns — and would need a huge amount to reach runoff. Start small and pot up as it grows; that's why a seedling only needs a splash.")
 						shelfLifeWarning
-						Text("Coco is watered to ~10–20% runoff to keep it moist and flush salts, so this is **per watering** — set by the container size, not the plant's drink. At **\(phase.rawValue)** you'd typically water **\(phase.wateringsPerDayHint)**; mix a fresh batch each time and adjust to your actual runoff.")
+						Text("So mix a fresh batch for each watering, feed to runoff, then adjust by eye: ran dry before any runoff? mix a bit more. Lots left over or pooling? mix less.")
 							.font(.caption2).foregroundStyle(Theme.secondary)
 							.frame(maxWidth: .infinity, alignment: .leading)
 					}
@@ -39,7 +38,20 @@ struct MixVolumeSheet: View {
 			}
 		}
 		.preferredColorScheme(colorScheme)
-		.presentationDetents([.large])   // open full-height, not a half sheet
+		.presentationDetents([.large])   // open full-height
+	}
+
+	private func section(_ icon: String, _ title: String, _ body: String) -> some View {
+		VStack(alignment: .leading, spacing: 6) {
+			HStack(spacing: 6) {
+				Image(systemName: icon).font(.caption).foregroundStyle(Theme.accent)
+				Text(title).font(.system(size: 11, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.secondary)
+			}
+			Text(body).font(.callout).foregroundStyle(Theme.primary)
+				.fixedSize(horizontal: false, vertical: true)
+		}
+		.frame(maxWidth: .infinity, alignment: .leading)
+		.padding(16).glassCard()
 	}
 
 	// Mixed feed doesn't keep — warn against over-mixing.
@@ -55,65 +67,12 @@ struct MixVolumeSheet: View {
 		.background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 		.overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.orange.opacity(0.35)))
 	}
-
-	private var plantsCard: some View {
-		HStack {
-			Text("Plants").font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
-			Spacer()
-			Text("\(settings.plantCount)")
-				.font(.title3.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
-			Stepper("", value: $settings.plantCount, in: 1...50).labelsHidden().tint(Theme.accent)
-		}
-		.padding(16).glassCard()
-	}
-
-	private var potCard: some View {
-		VStack(spacing: 8) {
-			HStack {
-				Text("Pot size").font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
-				Spacer()
-				Text(String(format: "%.0f L", settings.potVolumeL))
-					.font(.title3.weight(.bold).monospacedDigit()).foregroundStyle(Theme.accent)
-			}
-			Slider(value: $settings.potVolumeL, in: 1...50, step: 1).tint(Theme.accent)
-			Text("The container they're in right now — a seedling's small cup, not its final pot.")
-				.font(.caption2).foregroundStyle(Theme.secondary)
-				.frame(maxWidth: .infinity, alignment: .leading)
-		}
-		.padding(16).glassCard()
-	}
-
-	private var resultCard: some View {
-		VStack(spacing: 10) {
-			Text("MIX PER WATERING")
-				.font(.system(size: 11, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.secondary)
-			Text("\(Int(perWatering)) L")
-				.font(.system(size: 38, weight: .bold).monospacedDigit()).foregroundStyle(Theme.accent)
-			Text("≈ \(String(format: "%.1f", perPlant)) L per plant, to ~10–20% runoff")
-				.font(.caption).foregroundStyle(Theme.secondary)
-				.multilineTextAlignment(.center)
-			Button {
-				settings.volume = perWatering
-				dismiss()
-			} label: {
-				Text("Use as batch volume")
-					.font(.subheadline.weight(.bold)).foregroundStyle(Theme.accent)
-					.frame(maxWidth: .infinity)
-					.padding(.vertical, 11)
-					.background(Theme.accent.opacity(0.14), in: Capsule())
-			}
-			.buttonStyle(.plain)
-			.padding(.top, 2)
-		}
-		.frame(maxWidth: .infinity)
-		.padding(18).glassCard()
-	}
 }
 
 #Preview("Veg II") {
-	MixVolumeSheet(settings: .shared, phase: .vegetativeII, colorScheme: .dark)
+	MixVolumeSheet(phase: .vegetativeII, colorScheme: .dark)
 }
 
 #Preview("Peak bloom") {
-	MixVolumeSheet(settings: .shared, phase: .generativeII, colorScheme: .light)
+	MixVolumeSheet(phase: .generativeII, colorScheme: .light)
 }

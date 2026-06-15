@@ -28,7 +28,7 @@ struct InputsCard: View {
 		.padding(16)
 		.glassCard()
 		.sheet(isPresented: $showMixSheet) {
-			MixVolumeSheet(settings: settings, phase: phase, colorScheme: settings.appTheme.colorScheme)
+			MixVolumeSheet(phase: phase, colorScheme: settings.appTheme.colorScheme)
 		}
 	}
 

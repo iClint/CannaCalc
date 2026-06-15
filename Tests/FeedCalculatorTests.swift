@@ -160,27 +160,7 @@ struct FeedCalculatorTests {
 		#expect(range.lowerBound < 2.2 && 2.2 < range.upperBound)   // default sits inside the band
 	}
 
-	// MARK: - Suggested watering volume (water to runoff — container-driven, per watering)
-
-	@Test func suggestedWateringVolumeScalesWithPlantsAndContainer() {
-		// ~6% of container per watering: 4 × 11 × 0.06 = 2.64 → 3 L.
-		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 11) == (4.0 * 11 * 0.06).rounded())
-		#expect(CannaCoco.suggestedWateringVolume(plants: 8, potVolumeL: 11) == (8.0 * 11 * 0.06).rounded())
-		// Bigger container → more per watering.
-		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 20)
-			> CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 11))
-	}
-
-	@Test func suggestedWateringVolumeClampsToSliderRange() {
-		#expect(CannaCoco.suggestedWateringVolume(plants: 50, potVolumeL: 50) == 50)   // capped
-		#expect(CannaCoco.suggestedWateringVolume(plants: 1, potVolumeL: 1) == 1)       // floored
-	}
-
-	@Test func seedlingInSmallContainerStaysSmall() {
-		// The reported case: it's about the container, not the stage. 4 seedlings in 0.5 L cells
-		// → tiny (floored to the 1 L minimum), not litres each.
-		#expect(CannaCoco.suggestedWateringVolume(plants: 4, potVolumeL: 0.5) == 1)
-	}
+	// MARK: - Watering frequency hint (used by the "how much to mix?" explainer)
 
 	@Test func everyPhaseHasAWateringFrequencyHint() {
 		for phase in GrowthPhase.allCases { #expect(!phase.wateringsPerDayHint.isEmpty) }
@@ -351,8 +331,6 @@ struct FeedSettingsTests {
 		#expect(s.appTheme == .system)                      // empty → invalid rawValue → default
 		#expect(s.keepScreenAwake == true)
 		#expect(s.ownedProducts == Set(FeedProduct.allCases))   // own the full lineup on first launch
-		#expect(s.plantCount == 1)
-		#expect(s.potVolumeL == 11)
 	}
 
 	@Test func scalarSettingsPersistAcrossInstances() {
@@ -363,8 +341,6 @@ struct FeedSettingsTests {
 		writer.ecUnit = .ppm700
 		writer.appTheme = .dark
 		writer.keepScreenAwake = false
-		writer.plantCount = 6
-		writer.potVolumeL = 20
 
 		let reader = FeedSettings(defaults: ud)   // fresh instance, same store
 		#expect(reader.volume == 22)
@@ -372,8 +348,6 @@ struct FeedSettingsTests {
 		#expect(reader.ecUnit == .ppm700)
 		#expect(reader.appTheme == .dark)
 		#expect(reader.keepScreenAwake == false)   // exercises the `?? true` false branch on reload
-		#expect(reader.plantCount == 6)
-		#expect(reader.potVolumeL == 20)
 	}
 
 	@Test func setOwnedTogglesAndPersists() {
