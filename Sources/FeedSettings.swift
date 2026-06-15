@@ -51,11 +51,15 @@ final class FeedSettings: ObservableObject {
 		static let keepScreenAwake = "keepScreenAwake"
 		static let ownedProducts = "ownedProducts"
 		static let hasSeenDisclaimer = "hasSeenDisclaimer"
+		static let plantCount = "plantCount"
+		static let potVolumeL = "potVolumeL"
 	}
 
 	// First-launch defaults (used when nothing is persisted yet).
 	private static let defaultVolume = 15.0          // L
 	private static let defaultBaseEC = 0.3           // typical soft water (mS/cm)
+	private static let defaultPlantCount = 1
+	private static let defaultPotVolumeL = 11.0      // ~3-gallon, a common coco pot
 
 	// Injectable so tests can use an isolated suite; the app uses `.standard` via `shared`.
 	private let ud: UserDefaults
@@ -72,6 +76,9 @@ final class FeedSettings: ObservableObject {
 	}
 	// Whether the first-run disclaimer has been acknowledged (so it stops auto-presenting).
 	@Published var hasSeenDisclaimer: Bool { didSet { ud.set(hasSeenDisclaimer, forKey: Key.hasSeenDisclaimer) } }
+	// Used only to suggest a batch volume to mix (plants × pot size); the recipe scales to volume.
+	@Published var plantCount: Int { didSet { ud.set(plantCount, forKey: Key.plantCount) } }
+	@Published var potVolumeL: Double { didSet { ud.set(potVolumeL, forKey: Key.potVolumeL) } }
 
 	init(defaults: UserDefaults = .standard) {
 		ud = defaults
@@ -81,6 +88,8 @@ final class FeedSettings: ObservableObject {
 		appTheme = AppTheme(rawValue: ud.string(forKey: Key.appTheme) ?? "") ?? .system
 		keepScreenAwake = ud.object(forKey: Key.keepScreenAwake) as? Bool ?? true
 		hasSeenDisclaimer = ud.object(forKey: Key.hasSeenDisclaimer) as? Bool ?? false
+		plantCount = ud.object(forKey: Key.plantCount) as? Int ?? Self.defaultPlantCount
+		potVolumeL = ud.object(forKey: Key.potVolumeL) as? Double ?? Self.defaultPotVolumeL
 		// First launch: assume the grower owns the full CANNA lineup (recipe unchanged).
 		if let saved = ud.array(forKey: Key.ownedProducts) as? [String] {
 			ownedProducts = Set(saved.compactMap(FeedProduct.init(rawValue:)))

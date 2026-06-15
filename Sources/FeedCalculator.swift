@@ -136,6 +136,19 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
+	// Rough feed volume per plant as a fraction of pot volume, per watering — general coco
+	// practice (feed to 10–20% runoff at ~5–6% of pot), NOT from CANNA's chart. A little lower
+	// for tiny seedlings and the flush, a touch higher mid-bloom.
+	var feedFractionOfPot: Double {
+		switch self {
+		case .startRooting: return 0.04
+		case .vegetativeI: return 0.05
+		case .vegetativeII, .generativeI, .generativeII, .generativeIII: return 0.06
+		case .generativeIV: return 0.05
+		case .harvest: return 0
+		}
+	}
+
 	var isHarvest: Bool { self == .harvest }
 	// Phases that actually dose base nutrients (so the feed-EC band applies). Flush and
 	// harvest don't — flush is water + Cannazym/Boost, harvest is a chop.
@@ -223,6 +236,15 @@ enum CannaCoco {
 
 	// CANNA's recommended total EC for the phase (slider default), to 1 dp.
 	static func defaultEC(_ phase: GrowthPhase) -> Double { round1(ecForAB(phase, phase.cocoAB)) }
+
+	static let batchVolumeRange = 1.0...50.0   // litres the batch slider allows
+
+	// Rough batch volume (L) to mix for one watering of all plants — just to size the recipe.
+	// ~5–6% of pot per plant (feed to ~10–20% runoff); the grower trues it up by runoff.
+	static func suggestedBatchVolume(phase: GrowthPhase, plants: Int, potVolumeL: Double) -> Double {
+		let raw = (Double(plants) * potVolumeL * phase.feedFractionOfPot).rounded()
+		return min(batchVolumeRange.upperBound, max(batchVolumeRange.lowerBound, raw))
+	}
 
 	// Back-solve the A&B dose to hit a target total EC, clamped to the phase's safe band.
 	// Non-nutrient phases (flush/harvest) ignore the target and dose no A&B.

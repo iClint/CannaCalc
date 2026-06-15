@@ -160,6 +160,27 @@ struct FeedCalculatorTests {
 		#expect(range.lowerBound < 2.2 && 2.2 < range.upperBound)   // default sits inside the band
 	}
 
+	// MARK: - Suggested batch volume (plants × pot size, to size the recipe)
+
+	@Test func suggestedBatchScalesWithPlantsAndPot() {
+		// ~6% of pot per plant for a mid phase: 4 × 11 × 0.06 = 2.64 → 3 L.
+		#expect(CannaCoco.suggestedBatchVolume(phase: .vegetativeII, plants: 4, potVolumeL: 11)
+			== (4.0 * 11 * 0.06).rounded())
+		// Doubling the plants ~doubles the mix.
+		#expect(CannaCoco.suggestedBatchVolume(phase: .vegetativeII, plants: 8, potVolumeL: 11)
+			== (8.0 * 11 * 0.06).rounded())
+	}
+
+	@Test func suggestedBatchClampsToSliderRange() {
+		#expect(CannaCoco.suggestedBatchVolume(phase: .generativeII, plants: 50, potVolumeL: 50) == 50)  // capped
+		#expect(CannaCoco.suggestedBatchVolume(phase: .startRooting, plants: 1, potVolumeL: 1) == 1)      // floored
+	}
+
+	@Test func rootingFeedsLessThanBloomForSameSetup() {
+		#expect(CannaCoco.suggestedBatchVolume(phase: .startRooting, plants: 10, potVolumeL: 20)
+			< CannaCoco.suggestedBatchVolume(phase: .generativeII, plants: 10, potVolumeL: 20))
+	}
+
 	// MARK: - CalMag (water-EC driven, max 1.1 ml/L)
 
 	@Test func calMagFromWaterEC() {
@@ -325,6 +346,8 @@ struct FeedSettingsTests {
 		#expect(s.appTheme == .system)                      // empty → invalid rawValue → default
 		#expect(s.keepScreenAwake == true)
 		#expect(s.ownedProducts == Set(FeedProduct.allCases))   // own the full lineup on first launch
+		#expect(s.plantCount == 1)
+		#expect(s.potVolumeL == 11)
 	}
 
 	@Test func scalarSettingsPersistAcrossInstances() {
@@ -335,6 +358,8 @@ struct FeedSettingsTests {
 		writer.ecUnit = .ppm700
 		writer.appTheme = .dark
 		writer.keepScreenAwake = false
+		writer.plantCount = 6
+		writer.potVolumeL = 20
 
 		let reader = FeedSettings(defaults: ud)   // fresh instance, same store
 		#expect(reader.volume == 22)
@@ -342,6 +367,8 @@ struct FeedSettingsTests {
 		#expect(reader.ecUnit == .ppm700)
 		#expect(reader.appTheme == .dark)
 		#expect(reader.keepScreenAwake == false)   // exercises the `?? true` false branch on reload
+		#expect(reader.plantCount == 6)
+		#expect(reader.potVolumeL == 20)
 	}
 
 	@Test func setOwnedTogglesAndPersists() {
