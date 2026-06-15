@@ -38,7 +38,7 @@ struct MixVolumeSheet: View {
 			}
 		}
 		.preferredColorScheme(colorScheme)
-		.presentationDetents([.medium, .large])
+		.presentationDetents([.large])   // open full-height, not a half sheet
 	}
 
 	private var plantsCard: some View {
