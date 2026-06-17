@@ -30,7 +30,7 @@ struct CalculatorView: View {
 			ScrollView {
 				VStack(spacing: 14) {
 					HeaderBar { showSettings = true }
-					PhaseSummaryCard(phase: phase, colorScheme: settings.appTheme.colorScheme) { showPhasePicker = true }
+					PhaseSummaryCard(phase: phase) { showPhasePicker = true }
 					if phase.isHarvest {
 						HarvestCard()
 					} else {
@@ -52,7 +52,7 @@ struct CalculatorView: View {
 			PhasePickerSheet(phase: $phase, colorScheme: settings.appTheme.colorScheme)
 		}
 		.sheet(isPresented: $showSettings) {
-			SettingsSheet(settings: settings, colorScheme: settings.appTheme.colorScheme)
+			SettingsSheet(settings: settings, colorScheme: settings.appTheme.colorScheme, phase: phase)
 		}
 		.sheet(isPresented: $showDisclaimer) {
 			DisclaimerView(isFirstRun: true, colorScheme: settings.appTheme.colorScheme) { dontShowAgain in

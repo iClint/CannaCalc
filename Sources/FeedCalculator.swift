@@ -66,19 +66,6 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
-	// Illustration for the phase guide. SF Symbols for now (license-safe, theme-tintable);
-	// swap for richer artwork later without touching call sites.
-	var symbol: String {
-		switch self {
-		case .startRooting: return "leaf"
-		case .vegetativeI: return "leaf.fill"
-		case .vegetativeII: return "tree.fill"
-		case .generativeI, .generativeII, .generativeIII: return "camera.macro"
-		case .generativeIV: return "drop.fill"
-		case .harvest: return "scissors"
-		}
-	}
-
 	// Light schedule for the phase (the grower's table).
 	var light: String {
 		switch self {
@@ -136,25 +123,24 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
-	// Rough how-OFTEN-to-water hint for the phase. Coco is watered to runoff each time; as the
-	// plant grows it dries the medium faster, so frequency climbs — but the per-watering VOLUME
-	// is set by the container, not the stage. General practice, not from CANNA's chart.
-	var wateringsPerDayHint: String {
-		switch self {
-		case .startRooting: return "about once a day"
-		case .vegetativeI: return "1–2× a day"
-		case .vegetativeII: return "2–3× a day"
-		case .generativeI: return "3–4× a day"
-		case .generativeII, .generativeIII: return "3–5× a day"
-		case .generativeIV: return "2–3× a day"
-		case .harvest: return "—"
-		}
-	}
-
 	var isHarvest: Bool { self == .harvest }
 	// Phases that actually dose base nutrients (so the feed-EC band applies). Flush and
 	// harvest don't — flush is water + Cannazym/Boost, harvest is a chop.
 	var feedsNutrients: Bool { cocoAB > 0 }
+
+	// Per-phase ml/L for a bottle, mirroring the recipe's dose map so the product info table
+	// can't drift from the recipe. CalMag is water-EC driven (not phase-based) → nil, so callers
+	// render its special explanation instead of a per-phase number. A & B use the chart default.
+	func dose(of product: FeedProduct) -> Double? {
+		switch product {
+		case .cocoA, .cocoB: return cocoAB
+		case .rhizotonic:    return rhizotonic
+		case .cannazym:      return cannazym
+		case .cannaboost:    return cannaboost
+		case .pk:            return pk
+		case .calMag:        return nil
+		}
+	}
 }
 
 struct RecipeItem: Identifiable {
@@ -179,8 +165,50 @@ enum FeedProduct: String, CaseIterable, Identifiable {
 	var id: String { rawValue }
 	// Coco A & B are the base feed and are always part of the mix.
 	var isCore: Bool { self == .cocoA || self == .cocoB }
+	var isOptional: Bool { !isCore }
 	// Optional bottles the grower may or may not own, in mix order.
 	static var optional: [FeedProduct] { allCases.filter { !$0.isCore } }
+
+	// What the bottle is, when/how to use it, and whether it's optional — reference copy for the
+	// product info sheet, grounded in CANNA's stated product roles.
+	var purpose: String {
+		switch self {
+		case .calMag:
+			return "Calcium/magnesium supplement. Soft, RO or rainwater starts near 0 EC and lacks the calcium and magnesium the plant needs. Add Cal-Mag FIRST, before the base nutrients, to bring your source water up to CANNA's ideal ~0.4 mS/cm starting point. The dose is set by your water, not the growth phase: softer water needs more (up to ~1.1 ml/L at 0 EC), and hard water already at or above 0.4 mS/cm needs none. Optional — skip it if your tap water already reads ~0.4 mS/cm or higher."
+		case .cocoA:
+			return "Part A of CANNA's two-part Coco base nutrient — the core feed that supplies most of what the plant eats through every growing phase, always dosed alongside Coco B at the same amount. Add A to the water first and stir, THEN add B — never mix the A and B concentrates directly (that locks up calcium). This is the required base, not optional."
+		case .cocoB:
+			return "Part B of CANNA's two-part Coco base nutrient, dosed at the same amount as Coco A. The two halves are kept apart on purpose: combining the concentrates makes nutrients precipitate and drop out. Always add B to the water AFTER A is already mixed in. This is the required base, not optional."
+		case .rhizotonic:
+			return "Root stimulant and vitality booster — it drives vigorous root growth and improves resistance to stress and disease, most valuable on seedlings, cuttings and young plants. Used heaviest at rooting and early veg, then tapered right down and dropped before the bloom flush. Optional, and worth most early; by late flower it's barely used, so running out near the end matters little."
+		case .cannazym:
+			return "Enzyme additive that breaks down dead root material into nutrients the plant can reuse, keeping the root zone clean. Especially useful if you REUSE coco — double the dose (about 5 ml/L) on reused substrate. Used through veg and bloom including the flush; not at rooting or harvest. Optional."
+		case .cannaboost:
+			return "CANNABOOST Accelerator — a flowering and yield enhancer that lifts the plant's metabolism so buds develop faster, fuller and tastier. Comes in from the flip to flower (Vegetative II) and runs all the way through the flush. Optional, but a popular bloom booster."
+		case .pk:
+			return "PK 13/14 — a concentrated phosphorus + potassium bud booster for the peak of flowering. Use it for a SHORT window only: about 3 weeks before harvest, for 3–6 days, once the stretch has stopped and buds are swelling. Too early can block Cal-Mag uptake; too long can hurt flavour. Optional, and only ever used in that one short PK week."
+		}
+	}
+
+	// Phase-aware one-liner describing where this bottle sits in its schedule — derived from the
+	// dose curve so it always matches the chart. CalMag is water-driven, not phase-based.
+	func usageNote(at phase: GrowthPhase) -> String {
+		if self == .calMag {
+			return "Set by your source-water EC, not the growth phase — see above."
+		}
+		let doses = GrowthPhase.allCases.map { $0.dose(of: self) ?? 0 }
+		guard let i = GrowthPhase.allCases.firstIndex(of: phase) else { return "" }
+		let now = doses[i]
+		let earlierMax = doses[..<i].max() ?? 0
+		let moreLater = doses[(i + 1)...].contains { $0 > 0 }
+
+		if now == 0 {
+			return earlierMax > 0 ? "already dropped for this stage." : "not used at this stage."
+		}
+		if !moreLater { return "this is its last stage — dropped from here on." }
+		if now < earlierMax { return "tapering down, and dropped in a later stage." }
+		return "in active use at this stage."
+	}
 }
 
 struct Recipe {

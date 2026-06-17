@@ -14,12 +14,10 @@ struct InputsCard: View {
 	private var abEach: Double { recipe.items.first { $0.name == FeedProduct.cocoA.rawValue }?.mlPerL ?? 0 }
 	private var calMag: Double { CannaCoco.calMag(waterEC: settings.baseEC) }
 	private var ownsCalMag: Bool { settings.ownedProducts.contains(.calMag) }
-	@State private var showMixSheet = false
 
 	var body: some View {
 		VStack(spacing: 16) {
 			batchVolumeRow
-			mixHelpButton
 			if showDetails {
 				waterECRow
 				if phase.feedsNutrients { feedECControl }
@@ -27,26 +25,6 @@ struct InputsCard: View {
 		}
 		.padding(16)
 		.glassCard()
-		.sheet(isPresented: $showMixSheet) {
-			MixVolumeSheet(phase: phase, colorScheme: settings.appTheme.colorScheme)
-		}
-	}
-
-	// Opens the "how much to mix?" guide — sizes the batch from plants × pot size for the phase.
-	private var mixHelpButton: some View {
-		Button { showMixSheet = true } label: {
-			HStack(spacing: 7) {
-				Image(systemName: "drop.fill").font(.subheadline)
-				Text("How much should I mix?").font(.subheadline.weight(.semibold))
-				Spacer()
-				Image(systemName: "chevron.right").font(.caption2.weight(.bold))
-			}
-			.foregroundStyle(Theme.accent)
-			.padding(.horizontal, 12).padding(.vertical, 9)
-			.frame(maxWidth: .infinity)
-			.background(Theme.accent.opacity(0.12), in: Capsule())
-		}
-		.buttonStyle(.plain)
 	}
 
 	// Batch volume stays visible; the chevron reveals the source water EC + feed EC controls.

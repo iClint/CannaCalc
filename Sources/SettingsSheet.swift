@@ -5,8 +5,10 @@ import SwiftUI
 struct SettingsSheet: View {
 	@ObservedObject var settings: FeedSettings
 	let colorScheme: ColorScheme?
+	let phase: GrowthPhase   // current phase, so product info can show "right now" usage
 	@Environment(\.dismiss) private var dismiss
 	@State private var showDisclaimer = false
+	@State private var infoProduct: FeedProduct?
 
 	var body: some View {
 		NavigationStack {
@@ -71,26 +73,51 @@ struct SettingsSheet: View {
 		}
 	}
 
-	// Toggle the bottles the grower owns; un-owned products are left out of the recipe.
+	// Every product, with an (i) for what it is and when it's used. Base Coco A & B are always in
+	// the mix; the optional bottles toggle on/off by what the grower owns.
 	private var productsCard: some View {
 		VStack(alignment: .leading, spacing: 12) {
 			label("PRODUCTS YOU HAVE")
-			Text("Coco A & B are the base. Turn off any bottle you don't own and it's left out of the recipe.")
+			Text("Coco A & B are the base and always in the mix. Turn off any other bottle you don't own and it's left out of the recipe. Tap ⓘ for what each is and when it's used.")
 				.font(.caption2).foregroundStyle(Theme.secondary)
 			VStack(spacing: 0) {
-				ForEach(Array(FeedProduct.optional.enumerated()), id: \.element.id) { idx, product in
-					Toggle(isOn: ownedBinding(product)) {
-						Text(product.rawValue)
-							.font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
-					}
-					.tint(Theme.accent)
-					.padding(.vertical, 7)
-					if idx < FeedProduct.optional.count - 1 { Divider().overlay(Theme.cardStroke) }
+				ForEach(Array(FeedProduct.allCases.enumerated()), id: \.element.id) { idx, product in
+					productRow(product)
+					if idx < FeedProduct.allCases.count - 1 { Divider().overlay(Theme.cardStroke) }
 				}
 			}
 		}
 		.frame(maxWidth: .infinity, alignment: .leading)
 		.padding(16).glassCard()
+		.sheet(item: $infoProduct) { product in
+			ProductInfoSheet(product: product, phase: phase, colorScheme: colorScheme)
+		}
+	}
+
+	@ViewBuilder
+	private func productRow(_ product: FeedProduct) -> some View {
+		HStack(spacing: 10) {
+			if product.isCore {
+				Text(product.rawValue)
+					.font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
+				Text("BASE").font(.caption2.weight(.bold)).foregroundStyle(Theme.secondary)
+					.padding(.horizontal, 8).padding(.vertical, 3)
+					.background(Theme.secondary.opacity(0.14), in: Capsule())
+				Spacer()
+			} else {
+				Toggle(isOn: ownedBinding(product)) {
+					Text(product.rawValue)
+						.font(.subheadline.weight(.medium)).foregroundStyle(Theme.primary)
+				}
+				.tint(Theme.accent)
+			}
+			Button { infoProduct = product } label: {
+				Image(systemName: "info.circle").font(.body).foregroundStyle(Theme.accent)
+					.frame(width: 30, height: 30).contentShape(Rectangle())
+			}
+			.buttonStyle(.plain)
+		}
+		.padding(.vertical, 5)
 	}
 
 	// About & disclaimer — opens the same view the first-run popup shows, in reference mode.
@@ -142,5 +169,5 @@ struct SettingsSheet: View {
 }
 
 #Preview {
-	SettingsSheet(settings: .shared, colorScheme: nil)
+	SettingsSheet(settings: .shared, colorScheme: nil, phase: .vegetativeII)
 }

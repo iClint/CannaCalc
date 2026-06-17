@@ -1,12 +1,9 @@
 import SwiftUI
 
-// Compact current-phase card. The whole card is tappable to open the phase picker; the info
-// button sits on top and catches its own tap to open the stage guide instead.
+// Compact current-phase card. The whole card is tappable to open the phase picker.
 struct PhaseSummaryCard: View {
 	let phase: GrowthPhase
-	let colorScheme: ColorScheme?
 	let onTap: () -> Void
-	@State private var showGuide = false
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 4) {
@@ -23,7 +20,6 @@ struct PhaseSummaryCard: View {
 				}
 				Spacer()
 				LightBadge(light: phase.light)
-				infoButton
 				Image(systemName: "chevron.up.chevron.down")
 					.font(.caption.weight(.bold)).foregroundStyle(Theme.accent)
 			}
@@ -34,28 +30,13 @@ struct PhaseSummaryCard: View {
 		}
 		.padding(14)
 		.glassCard()
-		// Whole card opens the picker; the info button above catches its own tap.
 		.contentShape(Rectangle())
 		.onTapGesture { onTap() }
-		.sheet(isPresented: $showGuide) {
-			PhaseGuideSheet(phase: phase, colorScheme: colorScheme)
-		}
-	}
-
-	// Layered on top of the card — a big, obvious tap target that opens the stage guide.
-	private var infoButton: some View {
-		Button { showGuide = true } label: {
-			Image(systemName: "info.circle.fill")
-				.font(.title2).foregroundStyle(Theme.accent)
-				.frame(width: 34, height: 34)
-				.contentShape(Rectangle())
-		}
-		.buttonStyle(.plain)
 	}
 }
 
 #Preview {
-	PhaseSummaryCard(phase: .vegetativeII, colorScheme: .dark, onTap: {})
+	PhaseSummaryCard(phase: .vegetativeII, onTap: {})
 		.padding()
 		.background(Theme.bg)
 }

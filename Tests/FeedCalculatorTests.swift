@@ -160,10 +160,47 @@ struct FeedCalculatorTests {
 		#expect(range.lowerBound < 2.2 && 2.2 < range.upperBound)   // default sits inside the band
 	}
 
-	// MARK: - Watering frequency hint (used by the "how much to mix?" explainer)
+	// MARK: - Product info (dose mapping, reference copy, phase-aware usage note)
 
-	@Test func everyPhaseHasAWateringFrequencyHint() {
-		for phase in GrowthPhase.allCases { #expect(!phase.wateringsPerDayHint.isEmpty) }
+	@Test func doseOfMatchesChart() {
+		for phase in GrowthPhase.allCases {
+			#expect(phase.dose(of: .cocoA) == phase.cocoAB)
+			#expect(phase.dose(of: .cocoB) == phase.cocoAB)
+			#expect(phase.dose(of: .rhizotonic) == phase.rhizotonic)
+			#expect(phase.dose(of: .cannazym) == phase.cannazym)
+			#expect(phase.dose(of: .cannaboost) == phase.cannaboost)
+			#expect(phase.dose(of: .pk) == phase.pk)
+			#expect(phase.dose(of: .calMag) == nil)   // water-driven, not phase-based
+		}
+	}
+
+	@Test func doseOfMatchesDefaultRecipe() {
+		// At the CANNA default EC the back-solved A&B equals cocoAB, so dose(of:) ties to the recipe.
+		for phase in GrowthPhase.allCases where phase.feedsNutrients {
+			let r = make(phase)
+			#expect(abs((phase.dose(of: .cocoA) ?? 0) - ab(r)) < 1e-9)
+			#expect(abs((phase.dose(of: .rhizotonic) ?? 0) - dose(r, "CANNA Rhizotonic")) < 1e-9)
+		}
+	}
+
+	@Test func productPurposeAndOptionality() {
+		for product in FeedProduct.allCases { #expect(!product.purpose.isEmpty) }
+		#expect(!FeedProduct.cocoA.isOptional)
+		#expect(!FeedProduct.cocoB.isOptional)
+		#expect(FeedProduct.calMag.isOptional)
+		#expect(FeedProduct.rhizotonic.isOptional)
+	}
+
+	@Test func usageNoteIsPhaseAware() {
+		for product in FeedProduct.allCases {
+			for phase in GrowthPhase.allCases { #expect(!product.usageNote(at: phase).isEmpty) }
+		}
+		// Rhizotonic: heavy early, tapering mid-bloom, dropped by flush.
+		#expect(FeedProduct.rhizotonic.usageNote(at: .startRooting).contains("active"))
+		#expect(FeedProduct.rhizotonic.usageNote(at: .generativeI).contains("tapering"))
+		#expect(FeedProduct.rhizotonic.usageNote(at: .generativeIV).contains("dropped"))
+		// CalMag is water-driven, not phase-based.
+		#expect(FeedProduct.calMag.usageNote(at: .vegetativeII).contains("source-water"))
 	}
 
 	// MARK: - CalMag (water-EC driven, max 1.1 ml/L)
