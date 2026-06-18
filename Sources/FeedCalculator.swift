@@ -66,6 +66,21 @@ enum GrowthPhase: String, CaseIterable, Identifiable {
 		}
 	}
 
+	// Rough, typical length of the stage — a planning guide only. Real timing is strain- and
+	// grower-dependent (these phases are chosen by what the plant is doing, not the calendar).
+	var roughLength: String {
+		switch self {
+		case .startRooting: return "1–2 wk"
+		case .vegetativeI: return "2–6 wk"
+		case .vegetativeII: return "~1 wk"
+		case .generativeI: return "2–3 wk"
+		case .generativeII: return "~1 wk"
+		case .generativeIII: return "2–3 wk"
+		case .generativeIV: return "1–2 wk"
+		case .harvest: return "—"
+		}
+	}
+
 	// Light schedule for the phase (the grower's table).
 	var light: String {
 		switch self {

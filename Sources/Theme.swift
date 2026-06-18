@@ -56,6 +56,22 @@ extension View {
 	func glassCard() -> some View { modifier(GlassCard()) }
 }
 
+// Rough stage-length label with a clock (e.g. 🕐 2–3 wk). Hidden for "—" (harvest). Kept lighter
+// than LightBadge (no filled pill) so it reads as secondary planning info.
+struct DurationLabel: View {
+	let text: String
+
+	var body: some View {
+		if text != "—" {
+			HStack(spacing: 3) {
+				Image(systemName: "clock").font(.system(size: 9, weight: .bold))
+				Text(text).font(.caption2.weight(.medium))
+			}
+			.foregroundStyle(Theme.secondary)
+		}
+	}
+}
+
 // Light-schedule pill with a little sun (e.g. ☀︎ 18 h, ☀︎ 12/12). No sun for "—" (harvest).
 struct LightBadge: View {
 	let light: String

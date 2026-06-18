@@ -58,6 +58,7 @@ struct FeedCalculatorTests {
 			#expect(!phase.summary.isEmpty)
 			#expect(!phase.detail.isEmpty)
 			#expect(!phase.light.isEmpty)
+			#expect(!phase.roughLength.isEmpty)
 		}
 		#expect(GrowthPhase.startRooting.light == "18 h")
 		#expect(GrowthPhase.generativeI.light == "12/12")

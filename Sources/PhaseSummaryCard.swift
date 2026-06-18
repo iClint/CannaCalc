@@ -19,6 +19,7 @@ struct PhaseSummaryCard: View {
 					Text(phase.rawValue).font(.headline.weight(.bold)).foregroundStyle(Theme.primary)
 				}
 				Spacer()
+				DurationLabel(text: phase.roughLength)
 				LightBadge(light: phase.light)
 				Image(systemName: "chevron.up.chevron.down")
 					.font(.caption.weight(.bold)).foregroundStyle(Theme.accent)

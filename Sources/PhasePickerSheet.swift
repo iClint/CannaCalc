@@ -38,6 +38,7 @@ struct PhasePickerSheet: View {
 					Text(candidate.rawValue).font(.subheadline.weight(.bold))
 						.foregroundStyle(selected ? Theme.accent : Theme.primary)
 					Spacer()
+					DurationLabel(text: candidate.roughLength)
 					LightBadge(light: candidate.light, tint: selected ? Theme.accent : Theme.secondary)
 				}
 				Text(candidate.summary)
