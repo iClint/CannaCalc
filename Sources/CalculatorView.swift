@@ -4,18 +4,22 @@ import SwiftUI
 // header, phase summary, inputs, and recipe cards. Each card lives in its own file.
 struct CalculatorView: View {
 	@ObservedObject private var settings = FeedSettings.shared
-	@State private var phase: GrowthPhase = .vegetativeII
 	// Target feed EC (total mS/cm) the recipe makes; the A&B dose is back-solved to hit it.
-	@State private var targetEC: Double = CannaCoco.defaultEC(.vegetativeII)
+	@State private var targetEC: Double
 	@State private var showPhasePicker = false
 	@State private var showSettings = false
 	@State private var showDisclaimer = false
 
+	// The selected phase is persisted in FeedSettings so it survives across sessions.
+	private var phase: GrowthPhase { settings.phase }
+
 	// `initialPhase` lets previews open the screen on a specific phase (e.g. harvest); the app
-	// uses the default. targetEC tracks the phase's CANNA-recommended EC, same as the .onChange.
-	init(initialPhase: GrowthPhase = .vegetativeII) {
-		_phase = State(initialValue: initialPhase)
-		_targetEC = State(initialValue: CannaCoco.defaultEC(initialPhase))
+	// uses the persisted phase. targetEC tracks the phase's CANNA-recommended EC, same as the .onChange.
+	init(initialPhase: GrowthPhase? = nil) {
+		if let initialPhase {
+			FeedSettings.shared.phase = initialPhase
+		}
+		_targetEC = State(initialValue: CannaCoco.defaultEC(FeedSettings.shared.phase))
 	}
 
 	private var recipe: Recipe {
@@ -47,9 +51,9 @@ struct CalculatorView: View {
 		.preferredColorScheme(settings.appTheme.colorScheme)
 		.tint(Theme.accent)
 		// Each phase opens at CANNA's recommended feed EC.
-		.onChange(of: phase) { _, newPhase in targetEC = CannaCoco.defaultEC(newPhase) }
+		.onChange(of: settings.phase) { _, newPhase in targetEC = CannaCoco.defaultEC(newPhase) }
 		.sheet(isPresented: $showPhasePicker) {
-			PhasePickerSheet(phase: $phase, colorScheme: settings.appTheme.colorScheme)
+			PhasePickerSheet(phase: $settings.phase, colorScheme: settings.appTheme.colorScheme)
 		}
 		.sheet(isPresented: $showSettings) {
 			SettingsSheet(settings: settings, colorScheme: settings.appTheme.colorScheme, phase: phase)

@@ -51,6 +51,7 @@ final class FeedSettings: ObservableObject {
 		static let keepScreenAwake = "keepScreenAwake"
 		static let ownedProducts = "ownedProducts"
 		static let hasSeenDisclaimer = "hasSeenDisclaimer"
+		static let phase = "phase"
 	}
 
 	// First-launch defaults (used when nothing is persisted yet).
@@ -72,6 +73,8 @@ final class FeedSettings: ObservableObject {
 	}
 	// Whether the first-run disclaimer has been acknowledged (so it stops auto-presenting).
 	@Published var hasSeenDisclaimer: Bool { didSet { ud.set(hasSeenDisclaimer, forKey: Key.hasSeenDisclaimer) } }
+	// The grower's current growth phase, persisted so the app reopens where they left off.
+	@Published var phase: GrowthPhase { didSet { ud.set(phase.rawValue, forKey: Key.phase) } }
 
 	init(defaults: UserDefaults = .standard) {
 		ud = defaults
@@ -81,6 +84,7 @@ final class FeedSettings: ObservableObject {
 		appTheme = AppTheme(rawValue: ud.string(forKey: Key.appTheme) ?? "") ?? .system
 		keepScreenAwake = ud.object(forKey: Key.keepScreenAwake) as? Bool ?? true
 		hasSeenDisclaimer = ud.object(forKey: Key.hasSeenDisclaimer) as? Bool ?? false
+		phase = GrowthPhase(rawValue: ud.string(forKey: Key.phase) ?? "") ?? .vegetativeII
 		// First launch: assume the grower owns the full CANNA lineup (recipe unchanged).
 		if let saved = ud.array(forKey: Key.ownedProducts) as? [String] {
 			ownedProducts = Set(saved.compactMap(FeedProduct.init(rawValue:)))
